@@ -1,0 +1,18 @@
+{
+  "title": "TaskKeeper",
+  "tagline": "Track tasks, mark them done, and organize with tags.",
+  "newTask": "New task",
+  "taskPlaceholder": "What do you need to do?",
+  "tags": "Tags",
+  "tagsPlaceholder": "e.g. work, personal, urgent",
+  "dueDate": "Due date",
+  "openDatePicker": "Open date picker",
+  "addTask": "Add Task",
+  "all": "All",
+  "searchPlaceholder": "Search tasks...",
+  "noTasks": "No tasks yet. Add your first one above.",
+  "pendingCompleted": "{{pending}} pending · {{completed}} completed",
+  "clearCompleted": "Clear completed",
+  "toggleTheme": "Toggle theme",
+  "toggleLanguage": "Toggle language"
+}
