@@ -6,20 +6,25 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "@supabase/supabase-js": "^2.43.4",
     "i18next": "^25.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-i18next": "^15.7.3"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.9",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "vitest": "^3.2.4"
   }
 }
