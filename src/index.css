@@ -37,9 +37,6 @@
     @apply input pr-10;
   }
 
-  .date-input::-webkit-calendar-picker-indicator {
-    opacity: 0;
-  }
 
   .chip {
     @apply inline-flex items-center gap-1 rounded-full border border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700;
