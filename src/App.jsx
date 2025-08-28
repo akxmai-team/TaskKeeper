@@ -11,6 +11,7 @@ function uid() {
 export default function App() {
   const [tasks, setTasks] = useState([])
   const [text, setText] = useState('')
+  const [description, setDescription] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
@@ -76,7 +77,11 @@ export default function App() {
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase()
-      list = list.filter(t => t.text.toLowerCase().includes(q))
+      list = list.filter(
+        t =>
+          t.text.toLowerCase().includes(q) ||
+          t.description?.toLowerCase().includes(q)
+      )
     }
     return list
   }, [tasks, selectedTag, query])
@@ -89,9 +94,11 @@ export default function App() {
       .split(',')
       .map(t => t.trim().replace(/^#/, '').toLowerCase())
       .filter(Boolean)
+    const trimmedDesc = description.trim()
     const newTask = {
       id: uid(),
       text: trimmed,
+      description: trimmedDesc || null,
       done: false,
       tags,
       due_date: dueDate || null,
@@ -106,6 +113,7 @@ export default function App() {
     }
     setText('')
     setTagInput('')
+    setDescription('')
     setDueDate('')
   }
 
@@ -167,6 +175,16 @@ export default function App() {
                 <input id="task" className="input" placeholder={t('taskPlaceholder')} value={text} onChange={e => setText(e.target.value)} />
               </div>
               <div className="grid gap-2">
+                <label htmlFor="description" className="text-sm font-medium">{t('description')}</label>
+                <textarea
+                  id="description"
+                  className="input"
+                  placeholder={t('descriptionPlaceholder')}
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
                 <label htmlFor="tags" className="text-sm font-medium">{t('tags')}</label>
                 <input id="tags" className="input" placeholder={t('tagsPlaceholder')} value={tagInput} onChange={e => setTagInput(e.target.value)} />
               </div>
@@ -214,6 +232,9 @@ export default function App() {
                     </span>
                   )}
                 </div>
+                {task.description && (
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{task.description}</p>
+                )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {task.tags?.map(tag => (
                     <span key={tag} className="chip">#{tag}</span>

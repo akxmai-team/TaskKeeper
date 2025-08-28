@@ -8,6 +8,8 @@
   "dueDate": "Срок",
   "openDatePicker": "Открыть выбор даты",
   "addTask": "Добавить задачу",
+  "description": "Описание",
+  "descriptionPlaceholder": "Дополнительные детали (необязательно)",
   "all": "Все",
   "searchPlaceholder": "Поиск задач...",
   "noTasks": "Пока нет задач. Добавьте первую выше.",
