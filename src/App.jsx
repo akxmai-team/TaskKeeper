@@ -13,6 +13,32 @@ export default function App() {
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
   const dueInputRef = useRef(null)
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light')
+      )
+    }
+    return 'light'
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+    root.style.colorScheme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
+  }
 
   useEffect(() => {
     async function load() {
@@ -95,9 +121,18 @@ export default function App() {
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-10 border-b border-gray-200/80 dark:border-gray-800/80 bg-white/70 dark:bg-gray-900/70 backdrop-blur">
-        <div className="mx-auto max-w-3xl px-4 py-4">
-          <h1 className="text-2xl font-semibold tracking-tight">TaskKeeper</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Track tasks, mark them done, and organize with tags.</p>
+        <div className="mx-auto max-w-3xl px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">TaskKeeper</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Track tasks, mark them done, and organize with tags.</p>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="btn btn-outline rounded-full w-9 h-9 flex items-center justify-center"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
       </header>
 
