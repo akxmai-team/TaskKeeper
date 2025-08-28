@@ -4,7 +4,7 @@
   "newTask": "Новая задача",
   "taskPlaceholder": "Что нужно сделать?",
   "tags": "Теги",
-  "tagsPlaceholder": "например, работа, личное, срочно",
+  "tagsPlaceholder": "например: работа, личное, срочно",
   "dueDate": "Срок",
   "openDatePicker": "Открыть выбор даты",
   "addTask": "Добавить задачу",
