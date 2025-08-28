@@ -9,6 +9,7 @@ export default function App() {
   const [tasks, setTasks] = useState([])
   const [text, setText] = useState('')
   const [tagInput, setTagInput] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
 
@@ -49,7 +50,13 @@ export default function App() {
       .split(',')
       .map(t => t.trim().replace(/^#/, '').toLowerCase())
       .filter(Boolean)
-    const newTask = { id: uid(), text: trimmed, done: false, tags }
+    const newTask = {
+      id: uid(),
+      text: trimmed,
+      done: false,
+      tags,
+      due_date: dueDate || null,
+    }
     const { data } = await supabase
       .from('tasks')
       .insert([newTask])
@@ -60,6 +67,7 @@ export default function App() {
     }
     setText('')
     setTagInput('')
+    setDueDate('')
   }
 
   async function toggleDone(id) {
@@ -105,6 +113,16 @@ export default function App() {
                 <label htmlFor="tags" className="text-sm font-medium">Tags</label>
                 <input id="tags" className="input" placeholder="e.g. work, personal, urgent" value={tagInput} onChange={e => setTagInput(e.target.value)} />
               </div>
+              <div className="grid gap-2">
+                <label htmlFor="due" className="text-sm font-medium">Due date</label>
+                <input
+                  id="due"
+                  type="date"
+                  className="input"
+                  value={dueDate}
+                  onChange={e => setDueDate(e.target.value)}
+                />
+              </div>
             </div>
             <div className="flex sm:justify-end">
               <button type="submit" className="btn btn-primary w-full sm:w-auto">Add Task</button>
@@ -139,6 +157,11 @@ export default function App() {
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <p className={`text-sm sm:text-base ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>{task.text}</p>
+                  {task.due_date && (
+                    <span className="text-xs text-gray-500">
+                      {new Date(task.due_date).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {task.tags?.map(tag => (
