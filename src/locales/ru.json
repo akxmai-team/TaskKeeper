@@ -1,0 +1,18 @@
+{
+  "title": "TaskKeeper",
+  "tagline": "Отслеживайте задачи, отмечайте выполненными и организуйте с помощью тегов.",
+  "newTask": "Новая задача",
+  "taskPlaceholder": "Что нужно сделать?",
+  "tags": "Теги",
+  "tagsPlaceholder": "например, работа, личное, срочно",
+  "dueDate": "Срок",
+  "openDatePicker": "Открыть выбор даты",
+  "addTask": "Добавить задачу",
+  "all": "Все",
+  "searchPlaceholder": "Поиск задач...",
+  "noTasks": "Пока нет задач. Добавьте первую выше.",
+  "pendingCompleted": "{{pending}} в ожидании · {{completed}} завершено",
+  "clearCompleted": "Удалить выполненные",
+  "toggleTheme": "Переключить тему",
+  "toggleLanguage": "Сменить язык"
+}
