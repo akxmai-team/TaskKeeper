@@ -31,7 +31,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 Create a `tasks` table with the columns:
 
 - `id` (`text` or `uuid`) – primary key
-- `text` (`text`) – task description
+- `text` (`text`) – task title
+- `description` (`text`) – optional details
 - `done` (`boolean`) – completion status
 - `tags` (`text[]`) – array of tags
 - `due_date` (`date`) – optional due date

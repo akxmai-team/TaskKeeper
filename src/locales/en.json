@@ -8,6 +8,8 @@
   "dueDate": "Due date",
   "openDatePicker": "Open date picker",
   "addTask": "Add Task",
+  "description": "Description",
+  "descriptionPlaceholder": "Additional details (optional)",
   "all": "All",
   "searchPlaceholder": "Search tasks...",
   "noTasks": "No tasks yet. Add your first one above.",
