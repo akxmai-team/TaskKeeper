@@ -12,7 +12,7 @@ Modern React + Tailwind app to keep track of your tasks. Add tasks, mark them as
 ## Features
 
 - Add tasks with optional comma-separated tags
-- Optionally assign a due date to tasks
+- Optionally assign a due date to tasks with a native date picker
 - Toggle tasks done/undone
 - Filter by tag or search by text
 - Persist tasks in Supabase
