@@ -1,28 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
+import { supabase } from './supabaseClient'
 
 function uid() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-const STORAGE_KEY = 'taskkeeper:v1:tasks'
-
 export default function App() {
-  const [tasks, setTasks] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : []
-    } catch {
-      return []
-    }
-  })
+  const [tasks, setTasks] = useState([])
   const [text, setText] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
-  }, [tasks])
+    async function load() {
+      const { data } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setTasks(data ?? [])
+    }
+    load()
+  }, [])
 
   const allTags = useMemo(() => {
     const set = new Set()
@@ -42,7 +41,7 @@ export default function App() {
     return list
   }, [tasks, selectedTag, query])
 
-  function onAddTask(e) {
+  async function onAddTask(e) {
     e.preventDefault()
     const trimmed = text.trim()
     if (!trimmed) return
@@ -51,16 +50,36 @@ export default function App() {
       .map(t => t.trim().replace(/^#/, '').toLowerCase())
       .filter(Boolean)
     const newTask = { id: uid(), text: trimmed, done: false, tags }
-    setTasks(prev => [newTask, ...prev])
+    const { data } = await supabase
+      .from('tasks')
+      .insert([newTask])
+      .select()
+      .single()
+    if (data) {
+      setTasks(prev => [data, ...prev])
+    }
     setText('')
     setTagInput('')
   }
 
-  function toggleDone(id) {
-    setTasks(prev => prev.map(t => (t.id === id ? { ...t, done: !t.done } : t)))
+  async function toggleDone(id) {
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
+    const { data } = await supabase
+      .from('tasks')
+      .update({ done: !task.done })
+      .eq('id', id)
+      .select()
+      .single()
+    if (data) {
+      setTasks(prev => prev.map(t => (t.id === id ? data : t)))
+    }
   }
 
-  function clearCompleted() {
+  async function clearCompleted() {
+    const completedIds = tasks.filter(t => t.done).map(t => t.id)
+    if (completedIds.length === 0) return
+    await supabase.from('tasks').delete().in('id', completedIds)
     setTasks(prev => prev.filter(t => !t.done))
   }
 
