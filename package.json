@@ -12,8 +12,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "@supabase/supabase-js": "^2.43.4",
-    "i18next": "^23.10.1",
-    "react-i18next": "^15.3.1"
+    "i18next": "^25.4.1",
+    "react-i18next": "^15.7.3"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
