@@ -16,5 +16,6 @@
   "pendingCompleted": "{{pending}} в ожидании · {{completed}} завершено",
   "clearCompleted": "Удалить выполненные",
   "toggleTheme": "Переключить тему",
-  "toggleLanguage": "Сменить язык"
+  "toggleLanguage": "Сменить язык",
+  "syncError": "Не удалось сохранить задачу. Попробуйте позже."
 }

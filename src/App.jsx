@@ -25,6 +25,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const dueInputRef = useRef(null)
   const { t, i18n } = useTranslation()
+  const MAX_RETRIES = 3
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       return (
@@ -66,9 +67,11 @@ export default function App() {
         .from('tasks')
         .select('*')
         .order('created_at', { ascending: false })
-      if (data) {
-        setTasks(data)
-      }
+      setTasks(prev => {
+        const pending = prev.filter(t => t.pending)
+        pending.forEach(t => retryTask(t))
+        return [...pending, ...(data || [])]
+      })
     }
     load()
   }, [])
@@ -99,7 +102,33 @@ export default function App() {
     return list
   }, [tasks, selectedTag, query])
 
-  async function onAddTask(e) {
+  function retryTask(task, attempt = task.attempts || 0) {
+    const { pending, error, attempts, ...dbTask } = task
+    supabase
+      .from('tasks')
+      .insert([dbTask])
+      .select()
+      .single()
+      .then(({ data, error: err }) => {
+        if (err || !data) {
+          const nextAttempt = attempt + 1
+          setTasks(prev =>
+            prev.map(t =>
+              t.id === task.id
+                ? { ...t, attempts: nextAttempt, error: nextAttempt >= MAX_RETRIES }
+                : t
+            )
+          )
+          if (nextAttempt < MAX_RETRIES) {
+            setTimeout(() => retryTask(task, nextAttempt), 5000)
+          }
+        } else {
+          setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
+        }
+      })
+  }
+
+  function onAddTask(e) {
     e.preventDefault()
     const trimmed = text.trim()
     if (!trimmed) return
@@ -115,15 +144,11 @@ export default function App() {
       done: false,
       tags,
       due_date: dueDate || null,
+      pending: true,
+      attempts: 0,
     }
-    const { data } = await supabase
-      .from('tasks')
-      .insert([newTask])
-      .select()
-      .single()
-    if (data) {
-      setTasks(prev => [data, ...prev])
-    }
+    setTasks(prev => [newTask, ...prev])
+    retryTask(newTask)
     setText('')
     setTagInput('')
     setDescription('')
@@ -132,7 +157,7 @@ export default function App() {
 
   async function toggleDone(id) {
     const task = tasks.find(t => t.id === id)
-    if (!task) return
+    if (!task || task.pending) return
     const { data } = await supabase
       .from('tasks')
       .update({ done: !task.done })
@@ -234,19 +259,28 @@ export default function App() {
                 type="checkbox"
                 checked={task.done}
                 onChange={() => toggleDone(task.id)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                disabled={task.pending || task.error}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
               />
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <p className={`text-sm sm:text-base ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>{task.text}</p>
-                  {task.due_date && (
-                    <span className="text-xs text-gray-500">
-                      {new Date(task.due_date).toLocaleDateString()}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {task.due_date && (
+                      <span className="text-xs text-gray-500">
+                        {new Date(task.due_date).toLocaleDateString()}
+                      </span>
+                    )}
+                    {task.pending && !task.error && (
+                      <span className="h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
                 </div>
                 {task.description && (
                   <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{task.description}</p>
+                )}
+                {task.error && (
+                  <p className="mt-1 text-xs text-red-500">{t('syncError')}</p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {task.tags?.map(tag => (

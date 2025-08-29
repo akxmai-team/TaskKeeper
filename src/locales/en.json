@@ -16,5 +16,6 @@
   "pendingCompleted": "{{pending}} pending · {{completed}} completed",
   "clearCompleted": "Clear completed",
   "toggleTheme": "Toggle theme",
-  "toggleLanguage": "Toggle language"
+  "toggleLanguage": "Toggle language",
+  "syncError": "Failed to save task. Please try again later."
 }
