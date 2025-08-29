@@ -148,7 +148,13 @@ export default function App() {
 
   function syncTask(task, attempt = task.attempts || 0) {
     if (!navigator.onLine) return
-    const { action, ...dbTask } = task
+    const {
+      action,
+      pending: _pending,
+      attempts: _attempts,
+      error: _error,
+      ...dbTask
+    } = task
     let request
     if (action === 'insert') {
       request = supabase.from('tasks').insert([dbTask]).select().single()
