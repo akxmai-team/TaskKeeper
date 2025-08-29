@@ -24,6 +24,7 @@ export default function App() {
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
   const dueInputRef = useRef(null)
+  const tasksRef = useRef(tasks)
   const { t, i18n } = useTranslation()
   const MAX_RETRIES = 3
   const [theme, setTheme] = useState(() => {
@@ -69,16 +70,59 @@ export default function App() {
         .order('created_at', { ascending: false })
       setTasks(prev => {
         const pending = prev.filter(t => t.pending)
-        pending.forEach(t => retryTask(t))
-        return [...pending, ...(data || [])]
+        pending.forEach(t => syncTask(t))
+        const remote = (data || []).filter(t => !pending.some(p => p.id === t.id))
+        return [...pending, ...remote]
       })
     }
     load()
   }, [])
 
   useEffect(() => {
+    const channel = supabase
+      .channel('tasks')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        payload => {
+          setTasks(prev => {
+            const pendingIds = prev.filter(t => t.pending).map(t => t.id)
+            const id = payload.new?.id || payload.old?.id
+            if (pendingIds.includes(id)) return prev
+            switch (payload.eventType) {
+              case 'INSERT':
+                return [payload.new, ...prev.filter(t => t.id !== id)]
+              case 'UPDATE':
+                return prev.map(t => (t.id === id ? payload.new : t))
+              case 'DELETE':
+                return prev.filter(t => t.id !== id)
+              default:
+                return prev
+            }
+          })
+        }
+      )
+      .subscribe()
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
     localStorage.setItem('tasks', JSON.stringify(tasks))
   }, [tasks])
+
+  useEffect(() => {
+    tasksRef.current = tasks
+  }, [tasks])
+
+  useEffect(() => {
+    function handleOnline() {
+      tasksRef.current.filter(t => t.pending).forEach(syncTask)
+    }
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [])
 
   const allTags = useMemo(() => {
     const set = new Set()
@@ -102,30 +146,34 @@ export default function App() {
     return list
   }, [tasks, selectedTag, query])
 
-  function retryTask(task, attempt = task.attempts || 0) {
-    const { pending, error, attempts, ...dbTask } = task
-    supabase
-      .from('tasks')
-      .insert([dbTask])
-      .select()
-      .single()
-      .then(({ data, error: err }) => {
-        if (err || !data) {
-          const nextAttempt = attempt + 1
-          setTasks(prev =>
-            prev.map(t =>
-              t.id === task.id
-                ? { ...t, attempts: nextAttempt, error: nextAttempt >= MAX_RETRIES }
-                : t
-            )
+  function syncTask(task, attempt = task.attempts || 0) {
+    const { pending, error, attempts, action, ...dbTask } = task
+    let request
+    if (action === 'insert') {
+      request = supabase.from('tasks').insert([dbTask]).select().single()
+    } else if (action === 'update') {
+      const { id, ...fields } = dbTask
+      request = supabase.from('tasks').update(fields).eq('id', id).select().single()
+    } else {
+      return
+    }
+    request.then(({ data, error: err }) => {
+      if (err || !data) {
+        const nextAttempt = attempt + 1
+        setTasks(prev =>
+          prev.map(t =>
+            t.id === task.id
+              ? { ...t, attempts: nextAttempt, error: nextAttempt >= MAX_RETRIES }
+              : t
           )
-          if (nextAttempt < MAX_RETRIES) {
-            setTimeout(() => retryTask(task, nextAttempt), 5000)
-          }
-        } else {
-          setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
+        )
+        if (nextAttempt < MAX_RETRIES) {
+          setTimeout(() => syncTask(task, nextAttempt), 5000)
         }
-      })
+      } else {
+        setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
+      }
+    })
   }
 
   function onAddTask(e) {
@@ -146,26 +194,33 @@ export default function App() {
       due_date: dueDate || null,
       pending: true,
       attempts: 0,
+      action: 'insert',
     }
     setTasks(prev => [newTask, ...prev])
-    retryTask(newTask)
+    syncTask(newTask)
     setText('')
     setTagInput('')
     setDescription('')
     setDueDate('')
   }
 
-  async function toggleDone(id) {
-    const task = tasks.find(t => t.id === id)
-    if (!task || task.pending) return
-    const { data } = await supabase
-      .from('tasks')
-      .update({ done: !task.done })
-      .eq('id', id)
-      .select()
-      .single()
-    if (data) {
-      setTasks(prev => prev.map(t => (t.id === id ? data : t)))
+  function toggleDone(id) {
+    let updated
+    setTasks(prev => {
+      const task = prev.find(t => t.id === id)
+      if (!task) return prev
+      updated = {
+        ...task,
+        done: !task.done,
+        pending: true,
+        action: task.pending ? task.action : 'update',
+        attempts: task.pending ? task.attempts : 0,
+        error: false,
+      }
+      return prev.map(t => (t.id === id ? updated : t))
+    })
+    if (updated) {
+      syncTask(updated)
     }
   }
 
@@ -259,7 +314,7 @@ export default function App() {
                 type="checkbox"
                 checked={task.done}
                 onChange={() => toggleDone(task.id)}
-                disabled={task.pending || task.error}
+                disabled={task.error}
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
               />
               <div className="flex-1">
