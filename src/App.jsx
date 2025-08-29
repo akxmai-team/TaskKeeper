@@ -147,18 +147,41 @@ export default function App() {
   }, [tasks, selectedTag, query])
 
   function syncTask(task, attempt = task.attempts || 0) {
-    const { pending, error, attempts, action, ...dbTask } = task
+    if (!navigator.onLine) return
+    const { action, ...dbTask } = task
     let request
     if (action === 'insert') {
       request = supabase.from('tasks').insert([dbTask]).select().single()
     } else if (action === 'update') {
       const { id, ...fields } = dbTask
-      request = supabase.from('tasks').update(fields).eq('id', id).select().single()
+      request = supabase
+        .from('tasks')
+        .update(fields)
+        .eq('id', id)
+        .select()
+        .single()
     } else {
       return
     }
-    request.then(({ data, error: err }) => {
-      if (err || !data) {
+    request
+      .then(({ data, error: err }) => {
+        if (err || !data) {
+          const nextAttempt = attempt + 1
+          setTasks(prev =>
+            prev.map(t =>
+              t.id === task.id
+                ? { ...t, attempts: nextAttempt, error: nextAttempt >= MAX_RETRIES }
+                : t
+            )
+          )
+          if (nextAttempt < MAX_RETRIES) {
+            setTimeout(() => syncTask(task, nextAttempt), 5000)
+          }
+        } else {
+          setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
+        }
+      })
+      .catch(() => {
         const nextAttempt = attempt + 1
         setTasks(prev =>
           prev.map(t =>
@@ -170,10 +193,7 @@ export default function App() {
         if (nextAttempt < MAX_RETRIES) {
           setTimeout(() => syncTask(task, nextAttempt), 5000)
         }
-      } else {
-        setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
-      }
-    })
+      })
   }
 
   function onAddTask(e) {
