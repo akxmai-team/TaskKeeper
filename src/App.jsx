@@ -184,9 +184,7 @@ export default function App() {
             setTimeout(() => syncTask(task, nextAttempt), 5000)
           }
         } else {
-          setTasks(prev =>
-            prev.map(t => (t.id === task.id ? { ...data, pending: false } : t))
-          )
+          setTasks(prev => prev.map(t => (t.id === task.id ? { ...data } : t)))
         }
       })
       .catch(() => {
@@ -259,8 +257,6 @@ export default function App() {
     setTasks(prev => prev.filter(t => !t.done))
   }
 
-  const hasPending = tasks.some(t => t.pending)
-
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-10 border-b border-gray-200/80 dark:border-gray-800/80 bg-white/70 dark:bg-gray-900/70 backdrop-blur">
@@ -268,7 +264,6 @@ export default function App() {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('tagline')}</p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(hasPending ? 'notSynced' : 'synced')}</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -356,6 +351,9 @@ export default function App() {
                       <span className="text-xs text-gray-500">
                         {new Date(task.due_date).toLocaleDateString()}
                       </span>
+                    )}
+                    {task.pending && !task.error && (
+                      <span className="h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                     )}
                   </div>
                 </div>
