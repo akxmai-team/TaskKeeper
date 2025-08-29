@@ -9,7 +9,14 @@ function uid() {
 }
 
 export default function App() {
-  const [tasks, setTasks] = useState([])
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const stored = localStorage.getItem('tasks')
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
   const [text, setText] = useState('')
   const [description, setDescription] = useState('')
   const [tagInput, setTagInput] = useState('')
@@ -59,10 +66,16 @@ export default function App() {
         .from('tasks')
         .select('*')
         .order('created_at', { ascending: false })
-      setTasks(data ?? [])
+      if (data) {
+        setTasks(data)
+      }
     }
     load()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks])
 
   const allTags = useMemo(() => {
     const set = new Set()
