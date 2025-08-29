@@ -233,23 +233,18 @@ export default function App() {
   }
 
   function toggleDone(id) {
-    let updated
-    setTasks(prev => {
-      const task = prev.find(t => t.id === id)
-      if (!task) return prev
-      updated = {
-        ...task,
-        done: !task.done,
-        pending: true,
-        action: task.pending ? task.action : 'update',
-        attempts: task.pending ? task.attempts : 0,
-        error: false,
-      }
-      return prev.map(t => (t.id === id ? updated : t))
-    })
-    if (updated) {
-      syncTask(updated)
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
+    const updated = {
+      ...task,
+      done: !task.done,
+      pending: true,
+      action: task.pending ? task.action : 'update',
+      attempts: task.pending ? task.attempts : 0,
+      error: false,
     }
+    setTasks(prev => prev.map(t => (t.id === id ? updated : t)))
+    syncTask(updated)
   }
 
   async function clearCompleted() {
