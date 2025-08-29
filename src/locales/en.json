@@ -19,5 +19,5 @@
   "toggleLanguage": "Toggle language",
   "syncError": "Failed to save task. Please try again later.",
   "synced": "Synced",
-  "notSynced": "Not synced"
+  "notSynced": "Syncing..."
 }
