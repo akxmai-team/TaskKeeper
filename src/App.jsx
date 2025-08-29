@@ -159,7 +159,7 @@ export default function App() {
     if (action === 'insert') {
       request = supabase.from('tasks').insert([dbTask]).select().single()
     } else if (action === 'update') {
-      const { id, ...fields } = dbTask
+      const { id, created_at, ...fields } = dbTask
       request = supabase
         .from('tasks')
         .update(fields)
