@@ -8,6 +8,46 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'document',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'html-cache' }
+          },
+          {
+            urlPattern: ({ request }) =>
+              request.destination === 'script' || request.destination === 'style',
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'static-resources' }
+          },
+          {
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'image-cache',
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.origin.includes('supabase.co'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-cache',
+              networkTimeoutSeconds: 10,
+              cacheableResponse: { statuses: [0, 200] },
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60
+              }
+            }
+          }
+        ]
+      },
       manifest: {
         name: 'TaskKeeper',
         short_name: 'TaskKeeper',
