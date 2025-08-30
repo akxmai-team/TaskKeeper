@@ -120,7 +120,7 @@ export default function App() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA')
 
     if (Notification.permission === 'default') {
       Notification.requestPermission()
