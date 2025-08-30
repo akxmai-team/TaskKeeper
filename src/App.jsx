@@ -8,6 +8,36 @@ function uid() {
   return Math.random().toString(36).slice(2, 10)
 }
 
+function pad(n) {
+  return String(n).padStart(2, '0')
+}
+
+function formatDate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function getNextDate(current, recurrence) {
+  if (!recurrence || recurrence.type === 'none') return null
+  const date = current ? new Date(current) : new Date()
+  switch (recurrence.type) {
+    case 'daily':
+      date.setDate(date.getDate() + 1)
+      break
+    case 'weekly':
+      date.setDate(date.getDate() + 7)
+      break
+    case 'monthly':
+      date.setMonth(date.getMonth() + 1)
+      break
+    case 'custom':
+      date.setDate(date.getDate() + Number(recurrence.interval || 0))
+      break
+    default:
+      return null
+  }
+  return formatDate(date)
+}
+
 export default function App() {
   const [tasks, setTasks] = useState(() => {
     try {
@@ -21,6 +51,8 @@ export default function App() {
   const [description, setDescription] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [recurrence, setRecurrence] = useState('none')
+  const [interval, setInterval] = useState(1)
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
   const dueInputRef = useRef(null)
@@ -213,6 +245,13 @@ export default function App() {
       .map(t => t.trim().replace(/^#/, '').toLowerCase())
       .filter(Boolean)
     const trimmedDesc = description.trim()
+    const rec =
+      recurrence === 'none'
+        ? null
+        : {
+            type: recurrence,
+            interval: recurrence === 'custom' ? Number(interval) : undefined,
+          }
     const newTask = {
       id: uid(),
       text: trimmed,
@@ -220,6 +259,7 @@ export default function App() {
       done: false,
       tags,
       due_date: dueDate || null,
+      recurrence: rec,
       pending: true,
       attempts: 0,
       action: 'insert',
@@ -230,6 +270,8 @@ export default function App() {
     setTagInput('')
     setDescription('')
     setDueDate('')
+    setRecurrence('none')
+    setInterval(1)
   }
 
   function toggleDone(id) {
@@ -243,8 +285,28 @@ export default function App() {
       attempts: task.pending ? task.attempts : 0,
       error: false,
     }
-    setTasks(prev => prev.map(t => (t.id === id ? updated : t)))
+    let newTask
+    if (!task.done && task.recurrence && task.recurrence.type !== 'none') {
+      const nextDue = getNextDate(task.due_date, task.recurrence)
+      newTask = {
+        id: uid(),
+        text: task.text,
+        description: task.description,
+        tags: task.tags,
+        due_date: nextDue,
+        recurrence: task.recurrence,
+        done: false,
+        pending: true,
+        attempts: 0,
+        action: 'insert',
+      }
+    }
+    setTasks(prev => {
+      const list = prev.map(t => (t.id === id ? updated : t))
+      return newTask ? [newTask, ...list] : list
+    })
     syncTask(updated)
+    if (newTask) syncTask(newTask)
   }
 
   async function clearCompleted() {
@@ -310,6 +372,32 @@ export default function App() {
               <div className="grid gap-2">
                 <label htmlFor="due" className="text-sm font-medium">{t('dueDate')}</label>
                 <DatePicker id="due" value={dueDate} onChange={setDueDate} />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="recurrence" className="text-sm font-medium">{t('recurrence')}</label>
+                <select
+                  id="recurrence"
+                  className="input"
+                  value={recurrence}
+                  onChange={e => setRecurrence(e.target.value)}
+                >
+                  <option value="none">{t('none')}</option>
+                  <option value="daily">{t('daily')}</option>
+                  <option value="weekly">{t('weekly')}</option>
+                  <option value="monthly">{t('monthly')}</option>
+                  <option value="custom">{t('custom')}</option>
+                </select>
+                {recurrence === 'custom' && (
+                  <input
+                    id="interval"
+                    type="number"
+                    min="1"
+                    className="input mt-2"
+                    placeholder={t('customDays')}
+                    value={interval}
+                    onChange={e => setInterval(e.target.value)}
+                  />
+                )}
               </div>
             </div>
             <div className="flex sm:justify-end">
