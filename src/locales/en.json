@@ -20,7 +20,7 @@
   "syncError": "Failed to save task. Please try again later.",
   "synced": "Synced",
   "notSynced": "Syncing...",
-  "taskDueToday": "Task due today: {{task}}"
+  "taskDueToday": "Task due today: {{task}}",
   "tasks": "Tasks",
   "calendar": "Calendar"
 }
