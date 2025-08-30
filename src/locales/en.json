@@ -19,5 +19,6 @@
   "toggleLanguage": "Toggle language",
   "syncError": "Failed to save task. Please try again later.",
   "synced": "Synced",
-  "notSynced": "Syncing..."
+  "notSynced": "Syncing...",
+  "taskDueToday": "Task due today: {{task}}"
 }

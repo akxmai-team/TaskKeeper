@@ -25,6 +25,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const dueInputRef = useRef(null)
   const tasksRef = useRef(tasks)
+  const notifiedRef = useRef(new Set())
   const { t, i18n } = useTranslation()
   const MAX_RETRIES = 3
   const [theme, setTheme] = useState(() => {
@@ -115,6 +116,28 @@ export default function App() {
   useEffect(() => {
     tasksRef.current = tasks
   }, [tasks])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+
+    const today = new Date().toISOString().split('T')[0]
+
+    if (Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+    if (Notification.permission !== 'granted') return
+
+    tasks.forEach(task => {
+      if (
+        !task.done &&
+        task.due_date === today &&
+        !notifiedRef.current.has(task.id)
+      ) {
+        new Notification(t('taskDueToday', { task: task.text }))
+        notifiedRef.current.add(task.id)
+      }
+    })
+  }, [tasks, t])
 
   useEffect(() => {
     function handleOnline() {
