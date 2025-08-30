@@ -308,7 +308,7 @@ export default function App() {
                 <input id="tags" className="input" placeholder={t('tagsPlaceholder')} value={tagInput} onChange={e => setTagInput(e.target.value)} />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="due" className="text-sm font-medium">Due date</label>
+                <label htmlFor="due" className="text-sm font-medium">{t('dueDate')}</label>
                 <DatePicker id="due" value={dueDate} onChange={setDueDate} />
               </div>
             </div>
