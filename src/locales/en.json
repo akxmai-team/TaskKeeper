@@ -21,4 +21,6 @@
   "synced": "Synced",
   "notSynced": "Syncing...",
   "taskDueToday": "Task due today: {{task}}"
+  "tasks": "Tasks",
+  "calendar": "Calendar"
 }

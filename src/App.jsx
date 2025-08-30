@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useTranslation } from 'react-i18next'
 import DatePicker from './DatePicker'
+import TaskCalendar from './TaskCalendar'
 
 
 function uid() {
@@ -23,6 +24,7 @@ export default function App() {
   const [dueDate, setDueDate] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
   const [query, setQuery] = useState('')
+  const [tab, setTab] = useState('tasks')
   const dueInputRef = useRef(null)
   const tasksRef = useRef(tasks)
   const notifiedRef = useRef(new Set())
@@ -308,103 +310,124 @@ export default function App() {
         </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
-        {/* Add Task */}
-        <section className="card p-4 sm:p-6">
-          <form onSubmit={onAddTask} className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div className="grid gap-3">
-              <div className="grid gap-2">
-                <label htmlFor="task" className="text-sm font-medium">{t('newTask')}</label>
-                <input id="task" className="input" placeholder={t('taskPlaceholder')} value={text} onChange={e => setText(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="description" className="text-sm font-medium">{t('description')}</label>
-                <textarea
-                  id="description"
-                  className="input"
-                  placeholder={t('descriptionPlaceholder')}
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="tags" className="text-sm font-medium">{t('tags')}</label>
-                <input id="tags" className="input" placeholder={t('tagsPlaceholder')} value={tagInput} onChange={e => setTagInput(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="due" className="text-sm font-medium">{t('dueDate')}</label>
-                <DatePicker id="due" value={dueDate} onChange={setDueDate} />
-              </div>
-            </div>
-            <div className="flex sm:justify-end">
-              <button type="submit" className="btn btn-primary w-full sm:w-auto">{t('addTask')}</button>
-            </div>
-          </form>
-        </section>
-
-        {/* Filters */}
-        <section className="flex flex-wrap items-center gap-2">
-          <button className={`chip ${selectedTag === 'all' ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`} onClick={() => setSelectedTag('all')}>{t('all')}</button>
-          {allTags.map(tag => (
-            <button key={tag} onClick={() => setSelectedTag(tag)} className={`chip ${selectedTag === tag ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`}>#{tag}</button>
-          ))}
-          <div className="ml-auto w-full sm:w-auto">
-            <input className="input" placeholder={t('searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} />
-          </div>
-        </section>
-
-        {/* List */}
-        <section className="space-y-2">
-            {filtered.length === 0 && (
-              <div className="card p-6 text-sm text-gray-500 dark:text-gray-400">{t('noTasks')}</div>
-            )}
-          {filtered.map(task => (
-            <article key={task.id} className="card p-4 flex items-start gap-3">
-              <input
-                type="checkbox"
-                checked={task.done}
-                onChange={() => toggleDone(task.id)}
-                disabled={task.error}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
-              />
-              <div className="flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <p className={`text-sm sm:text-base ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>{task.text}</p>
-                  <div className="flex items-center gap-2">
-                    {task.due_date && (
-                      <span className="text-xs text-gray-500">
-                        {new Date(task.due_date).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {task.description && (
-                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{task.description}</p>
-                )}
-                {task.error && (
-                  <p className="mt-1 text-xs text-red-500">{t('syncError')}</p>
-                )}
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {task.tags?.map(tag => (
-                    <span key={tag} className="chip">#{tag}</span>
-                  ))}
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
-
-        {/* Footer actions */}
-        <section className="flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('pendingCompleted', {
-              pending: tasks.filter(t => !t.done).length,
-              completed: tasks.filter(t => t.done).length,
-            })}
-          </p>
-          <button className="btn btn-outline" onClick={clearCompleted} disabled={!tasks.some(t => t.done)}>
-            {t('clearCompleted')}
+        <section className="flex items-center gap-2">
+          <button
+            className={`chip ${tab === 'tasks' ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`}
+            onClick={() => setTab('tasks')}
+          >
+            {t('tasks')}
+          </button>
+          <button
+            className={`chip ${tab === 'calendar' ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`}
+            onClick={() => setTab('calendar')}
+          >
+            {t('calendar')}
           </button>
         </section>
+
+        {tab === 'tasks' && (
+          <>
+            {/* Add Task */}
+            <section className="card p-4 sm:p-6">
+              <form onSubmit={onAddTask} className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="grid gap-3">
+                  <div className="grid gap-2">
+                    <label htmlFor="task" className="text-sm font-medium">{t('newTask')}</label>
+                    <input id="task" className="input" placeholder={t('taskPlaceholder')} value={text} onChange={e => setText(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="description" className="text-sm font-medium">{t('description')}</label>
+                    <textarea
+                      id="description"
+                      className="input"
+                      placeholder={t('descriptionPlaceholder')}
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="tags" className="text-sm font-medium">{t('tags')}</label>
+                    <input id="tags" className="input" placeholder={t('tagsPlaceholder')} value={tagInput} onChange={e => setTagInput(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="due" className="text-sm font-medium">{t('dueDate')}</label>
+                    <DatePicker id="due" value={dueDate} onChange={setDueDate} />
+                  </div>
+                </div>
+                <div className="flex sm:justify-end">
+                  <button type="submit" className="btn btn-primary w-full sm:w-auto">{t('addTask')}</button>
+                </div>
+              </form>
+            </section>
+
+            {/* Filters */}
+            <section className="flex flex-wrap items-center gap-2">
+              <button className={`chip ${selectedTag === 'all' ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`} onClick={() => setSelectedTag('all')}>{t('all')}</button>
+              {allTags.map(tag => (
+                <button key={tag} onClick={() => setSelectedTag(tag)} className={`chip ${selectedTag === tag ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : ''}`}>#{tag}</button>
+              ))}
+              <div className="ml-auto w-full sm:w-auto">
+                <input className="input" placeholder={t('searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} />
+              </div>
+            </section>
+
+            {/* List */}
+            <section className="space-y-2">
+              {filtered.length === 0 && (
+                <div className="card p-6 text-sm text-gray-500 dark:text-gray-400">{t('noTasks')}</div>
+              )}
+              {filtered.map(task => (
+                <article key={task.id} className="card p-4 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => toggleDone(task.id)}
+                    disabled={task.error}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className={`text-sm sm:text-base ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>{task.text}</p>
+                      <div className="flex items-center gap-2">
+                        {task.due_date && (
+                          <span className="text-xs text-gray-500">
+                            {new Date(task.due_date).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {task.description && (
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{task.description}</p>
+                    )}
+                    {task.error && (
+                      <p className="mt-1 text-xs text-red-500">{t('syncError')}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {task.tags?.map(tag => (
+                        <span key={tag} className="chip">#{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            {/* Footer actions */}
+            <section className="flex items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('pendingCompleted', {
+                  pending: tasks.filter(t => !t.done).length,
+                  completed: tasks.filter(t => t.done).length,
+                })}
+              </p>
+              <button className="btn btn-outline" onClick={clearCompleted} disabled={!tasks.some(t => t.done)}>
+                {t('clearCompleted')}
+              </button>
+            </section>
+          </>
+        )}
+
+        {tab === 'calendar' && <TaskCalendar tasks={tasks} />}
       </main>
     </div>
   )
