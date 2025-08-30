@@ -362,7 +362,18 @@ export default function App() {
                 )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {task.tags?.map(tag => (
-                    <span key={tag} className="chip">#{tag}</span>
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setSelectedTag(tag)}
+                      className={`chip ${
+                        selectedTag === tag
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                          : ''
+                      }`}
+                    >
+                      #{tag}
+                    </button>
                   ))}
                 </div>
               </div>
