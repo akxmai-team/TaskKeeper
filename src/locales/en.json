@@ -19,5 +19,7 @@
   "toggleLanguage": "Toggle language",
   "syncError": "Failed to save task. Please try again later.",
   "synced": "Synced",
-  "notSynced": "Syncing..."
+  "notSynced": "Syncing...",
+  "tasks": "Tasks",
+  "calendar": "Calendar"
 }
